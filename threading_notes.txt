@@ -1,0 +1,102 @@
+Multithreading in Python – Key Concepts and Notes
+1️⃣ What is Multithreading?
+Multithreading allows multiple tasks (threads) to run concurrently within the same process.
+Python’s threading module is used to create and manage threads.
+Useful for I/O-bound tasks (e.g., network requests, file I/O, web scraping).
+Not effective for CPU-bound tasks due to the Global Interpreter Lock (GIL).
+2️⃣ Global Interpreter Lock (GIL) & Its Impact
+GIL allows only one thread to execute Python bytecode at a time (even if multiple threads exist).
+This means multithreading in Python is not true parallel execution for CPU-bound tasks.
+GIL releases periodically so that other threads can run.
+Threads still benefit I/O-bound operations because Python releases the GIL when waiting for I/O.
+3️⃣ Key Components of the threading Module
+Creating a Thread
+python
+Copy
+Edit
+import threading
+
+def task():
+    print("Thread running")
+
+thread = threading.Thread(target=task)  # Creating a thread
+thread.start()  # Starting the thread
+thread.join()   # Waiting for the thread to finish
+start() → Begins execution of the thread.
+join() → Blocks the main thread until the child thread completes.
+is_alive() → Checks if a thread is still running.
+4️⃣ Using join() for Synchronization
+When you create multiple threads, the main thread continues execution unless join() is used.
+join() ensures the main thread waits for all child threads to finish.
+python
+Copy
+Edit
+t1 = threading.Thread(target=task)
+t2 = threading.Thread(target=task)
+
+t1.start()
+t2.start()
+
+t1.join()  # Main thread waits for t1
+t2.join()  # Main thread waits for t2
+
+print("All threads completed.")
+✅ Ensures proper synchronization and prevents premature termination.
+
+5️⃣ Thread Safety & Race Conditions
+Race conditions occur when multiple threads modify shared data at the same time.
+Example without thread safety:
+python
+Copy
+Edit
+import threading
+
+counter = 0
+
+def increment():
+    global counter
+    for _ in range(100000):
+        counter += 1  # Multiple threads modifying shared data
+
+threads = [threading.Thread(target=increment) for _ in range(5)]
+
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()
+
+print("Final counter value:", counter)  # Likely incorrect due to race conditions
+❌ Counter value may be incorrect due to concurrent access.
+
+6️⃣ Using Lock to Prevent Race Conditions
+threading.Lock() ensures that only one thread modifies shared data at a time.
+python
+Copy
+Edit
+import threading
+
+lock = threading.Lock()
+counter = 0
+
+def increment():
+    global counter
+    for _ in range(100000):
+        with lock:  # Ensures only one thread can modify counter at a time
+            counter += 1
+
+threads = [threading.Thread(target=increment) for _ in range(5)]
+
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()
+
+print("Final counter value:", counter)  # Correct value due to thread safety
+✅ Prevents race conditions and ensures data consistency.
+
+7️⃣ Multithreading vs Multiprocessing
+Feature	Multithreading	Multiprocessing
+Uses	I/O-bound tasks	CPU-bound tasks
+Parallelism?	❌ No (due to GIL)	✅ Yes (separate processes)
+Best for	File I/O, Web Scraping, Network Requests	Heavy Computation (ML, Image Processing)
+Thread Safety?	Requires Lock	No need for Lock (separate memory)
